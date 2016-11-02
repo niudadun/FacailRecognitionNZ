@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facial Recognition</title>
+    <link rel="stylesheet" type="text/css" href="~/Content/homepage.css" />
+
+</head>
+<body>
+    <br><br><br><br><br>
+    <div class="elegant-searchbar">
+        <p id="logo-text">Facial Recognition</p><br>
+        <h1 id="intro-text">Search for similar faces</h1>
+        <p id="sub-text">Collocted more than 500000+ faces from wikipedia</p>
+    </div>
+   
+    <div class="elegant-searchbar">
+        <input id="files" type="text" disabled >
+    </div>
+    
+    <br>
+    <label class="myButton">
+        Upload Image <input id ="upload_Image" type="file" style="display: none;">
+    </label>
+    <button id="search_Button" type="submit" class="myButton">Search Facial Matches</button>
+    <output id="uploadedImage"></output>
+    <br>
+    <div style="overflow: auto; height: 500px">
+    <table class="table">
+        <tbody>
+            <tr id="addImages">
+                <th id="originalImage"></th>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+    <output id="list"></output>
+    <br><br><br><br><br><br><br><br><br><br><br><br>
+    <div class="row">
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-4">
+        </div>
+    </div>
+</body>
+</html>
+
