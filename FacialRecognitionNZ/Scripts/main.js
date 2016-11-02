@@ -1,13 +1,10 @@
 ﻿$(document).ready(function () {
-    if (window.File && window.FileReader && window.FileList && window.Blob) {
-    } else {
-        alert('The File APIs are not fully supported in this browser.');
-    }
+    
     $("#search_Button").hide();
     $("#upload_Image").change(function (e) {
         $("#originalImage").html('');
         $("#faceDetec").remove();
-        $(".matchResult").remove();
+        $(".matchResult").remove();//clear result tables
         handleFileSelect(e);
 
     });
@@ -15,7 +12,7 @@
         if (searchRunning) return;
         searchRunning = true;
         $("#list").html('');
-        $(".matchResult").remove();        
+        $(".matchResult").remove();
         RecognizeFaces(image_uid_confirm);
 
     });
@@ -24,14 +21,13 @@
 var image_uid_confirm;
 var searchRunning = false;
 function handleFileSelect(evt) {
-    var files = evt.target.files; // FileList object
+    var files = evt.target.files; // uploaded portrait
+    if (files.length == 0) return;
     handleSelectedFiles(files[0]);
 }
-
+//Get uploaded portrait and put in table to show to users
 function handleSelectedFiles(f) {
-    // files is a FileList of File objects. List some properties.
     var output = [];
-
     output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
                 f.size, ' bytes, last modified: ',
                 f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
@@ -50,15 +46,11 @@ function handleSelectedFiles(f) {
                 var idx = data_url.indexOf(prefix);
                 if (idx >= 0) {
                     var base64_data = data_url.substring(idx + prefix.length);
-
                     uploadImage(theFile.name, base64_data, 'propoints,classifiers,extended');
-
-                    // Render thumbnail.
                     var span = document.createElement('span');
                     span.innerHTML = ['<img class="thumb" style="height:200px" src="', data_url, '" title="', escape(theFile.name), '"/>'].join('');
                     $("#originalImage").html("");
                     $("#originalImage").html(span);
-                   // $("#uploadedImage").css({ "height": "30px", "width": "20px" });
                 }
             }
 
@@ -66,7 +58,7 @@ function handleSelectedFiles(f) {
     })(f);
     reader.readAsDataURL(f);    
 }
-var row_number = 1;
+
 function getFaceImage(face_uid) {
     var msg = '<?xml version="1.0" encoding="utf-8"?><FaceRequestId><api_key>d45fd466-51e2-4701-8da8-04351c872236</api_key>'+
               '<api_secret>171e8465-f548-401d-b63b-caf0dc28df5f</api_secret>' +
@@ -89,14 +81,15 @@ function getFaceImage(face_uid) {
                 var face_uid = $(xmlDoc).children("uid").text();
                 var face_image = $(xmlDoc).children("face_image").text();
                 var data_url = 'data:image/jpeg;base64,' + face_image;
-                // Render face image.
+                // Render face image to table.
                 var span = document.createElement('span');
                 if (face_uid == image_uid_confirm && $("#addImages").children().length <= 1) {
                     span.innerHTML = ['<img style="height:203px" src="', data_url, '" title="', escape(face_uid), '"/>'].join('');
+                    if (face_image == "") alert("Cannot Recognize, Please change another one");
                     $('<th id = "faceDetec" >' + span.innerHTML + '</th>').insertAfter("#originalImage");
-                    $("#search_Button").show();
+                    $("#search_Button").show();//after the user getting the image infomation, show the search button.
                 }
-                else {
+                else {//put macthing images in the table to show to users.
                     span.innerHTML = ['<img style="height:203px" src="', data_url, '" title="', escape(face_uid), '"/>'].join('');
                     $('<tr class="matchResult"><th>' + span.innerHTML + '</th></tr>').insertAfter("#addImages");
 
@@ -146,7 +139,7 @@ function uploadImage(image_filename, image_data, detection_flags) {
             }
         },
         error: function (jqXHR, textStatus, errorThrown) {
-            console.info(textStatus);
+            alert("cannot Get the image Info" + textStatus);
         }
     });
 }
@@ -189,6 +182,7 @@ function RecognizeFaces(pass_uid_confirm) {
         }
     });
 }
+//Get a list a matching portrait results.
 function GetRecognizeResult(Passrecognize_uid)
 {
     var recognize_uid = Passrecognize_uid;
@@ -278,26 +272,22 @@ function getImageInfo(image_uid) {
         }
     });
 }
-
+//parse portrait basic information got from web API.
 function parseImageInfo(xmlDocRoot) {
     var xmlDoc = $(xmlDocRoot).children("faces");
     if ($(xmlDoc).length > 0) {
         $(xmlDoc).children("FaceInfo").each(function () {
             var face_uid = $(this).children("uid").text();
-            var image_uid = $(this).children("image_uid").text();
-            //
-            image_uid_confirm = face_uid;
+            var image_uid = $(this).children("image_uid").text();          
             var score = parseFloat($(this).children("score").text());
-            //
             var x = parseFloat($(this).children("x").text());
             var y = parseFloat($(this).children("y").text());
             var width = parseFloat($(this).children("width").text());
             var height = parseFloat($(this).children("height").text());
             var angle = parseFloat($(this).children("angle").text());
-            //
             var points = $(this).children("points").children();
             var tags = $(this).children("tags").children();
-            //
+            image_uid_confirm = face_uid;
             getFaceImage(face_uid);
         });
     }
