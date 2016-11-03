@@ -1,12 +1,14 @@
 ﻿$(document).ready(function () {
-    
+
     $("#search_Button").hide();
     $("#upload_Image").change(function (e) {
         $("#originalImage").html('');
+        $(".startRec").remove();
         $("#faceDetec").remove();
+        $(".faceRecFailInfo").remove();
         $(".matchResult").remove();//clear result tables
         handleFileSelect(e);
-
+        $('<th class = "startRec" > Face Recognizing.Please wait a moment...</th>').insertAfter("#originalImage");
     });
     $("#search_Button").click(function () {
         if (searchRunning) return;
@@ -14,7 +16,6 @@
         $("#list").html('');
         $(".matchResult").remove();
         RecognizeFaces(image_uid_confirm);
-
     });
 
 });
@@ -31,7 +32,7 @@ function handleSelectedFiles(f) {
     output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
                 f.size, ' bytes, last modified: ',
                 f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
-                '</li>');   
+                '</li>');
     $("#uploadedImage").html(output.join(''));
     if (!f.type.match('image.*')) {
         return;
@@ -56,11 +57,11 @@ function handleSelectedFiles(f) {
 
         }
     })(f);
-    reader.readAsDataURL(f);    
+    reader.readAsDataURL(f);
 }
 
 function getFaceImage(face_uid) {
-    var msg = '<?xml version="1.0" encoding="utf-8"?><FaceRequestId><api_key>d45fd466-51e2-4701-8da8-04351c872236</api_key>'+
+    var msg = '<?xml version="1.0" encoding="utf-8"?><FaceRequestId><api_key>d45fd466-51e2-4701-8da8-04351c872236</api_key>' +
               '<api_secret>171e8465-f548-401d-b63b-caf0dc28df5f</api_secret>' +
               '<face_uid>' + face_uid + '</face_uid></FaceRequestId>';
     $.support.cors = true;
@@ -83,9 +84,9 @@ function getFaceImage(face_uid) {
                 var data_url = 'data:image/jpeg;base64,' + face_image;
                 // Render face image to table.
                 var span = document.createElement('span');
-                if (face_uid == image_uid_confirm && $("#addImages").children().length <= 1) {
+                if (face_uid == image_uid_confirm && $("#addImages").children().length <= 2 && $(".startRec").length > 0) {
+                    $(".startRec").remove();
                     span.innerHTML = ['<img style="height:203px" src="', data_url, '" title="', escape(face_uid), '"/>'].join('');
-                    if (face_image == "") alert("Cannot Recognize, Please change another one");
                     $('<th id = "faceDetec" >' + span.innerHTML + '</th>').insertAfter("#originalImage");
                     $("#search_Button").show();//after the user getting the image infomation, show the search button.
                 }
@@ -183,15 +184,14 @@ function RecognizeFaces(pass_uid_confirm) {
     });
 }
 //Get a list a matching portrait results.
-function GetRecognizeResult(Passrecognize_uid)
-{
+function GetRecognizeResult(Passrecognize_uid) {
     var recognize_uid = Passrecognize_uid;
     var msg = {
         "api_key": "d45fd466-51e2-4701-8da8-04351c872236",
         "api_secret": "171e8465-f548-401d-b63b-caf0dc28df5f",
         "recognize_uid": recognize_uid
     }
-    
+
     $.support.cors = true;
     $.ajax({
         crossDomain: true,
@@ -207,7 +207,7 @@ function GetRecognizeResult(Passrecognize_uid)
                 parseMacthInfo(data);
             }
             if (int_response == 1) {
-               setTimeout(function () { GetRecognizeResult(recognize_uid); }, 5000);
+                setTimeout(function () { GetRecognizeResult(recognize_uid); }, 5000);
             }
             else {
                 //error
@@ -234,7 +234,7 @@ function parseMacthInfo(data) {
 
 
 function getImageInfo(image_uid) {
-    var msg = '<?xml version="1.0" encoding="utf-8"?><ImageInfoRequestUid><api_key>d45fd466-51e2-4701-8da8-04351c872236</api_key>'+
+    var msg = '<?xml version="1.0" encoding="utf-8"?><ImageInfoRequestUid><api_key>d45fd466-51e2-4701-8da8-04351c872236</api_key>' +
               '<api_secret>171e8465-f548-401d-b63b-caf0dc28df5f</api_secret>' +
               '<img_uid>' + image_uid + '</img_uid></ImageInfoRequestUid>';
 
@@ -276,9 +276,14 @@ function getImageInfo(image_uid) {
 function parseImageInfo(xmlDocRoot) {
     var xmlDoc = $(xmlDocRoot).children("faces");
     if ($(xmlDoc).length > 0) {
+        if ($(xmlDoc).children("FaceInfo").length == 0) {
+            $(".startRec").remove();
+            $('<th class = "faceRecFailInfo" > Cannot Recognize face in this portrait, please upload another one with clear face.</th>').insertAfter("#originalImage");
+            return;
+        }
         $(xmlDoc).children("FaceInfo").each(function () {
             var face_uid = $(this).children("uid").text();
-            var image_uid = $(this).children("image_uid").text();          
+            var image_uid = $(this).children("image_uid").text();
             var score = parseFloat($(this).children("score").text());
             var x = parseFloat($(this).children("x").text());
             var y = parseFloat($(this).children("y").text());
@@ -292,5 +297,4 @@ function parseImageInfo(xmlDocRoot) {
         });
     }
 }
-
 
