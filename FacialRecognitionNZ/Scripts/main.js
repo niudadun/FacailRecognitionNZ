@@ -3,6 +3,7 @@
     $("#search_Button").hide();
     $("#upload_Image").change(function (e) {
         $("#originalImage").html('');
+        $("#uploadedImage").html('');
         $(".startRec").remove();
         $("#faceDetec").remove();
         $(".faceRecFailInfo").remove();
