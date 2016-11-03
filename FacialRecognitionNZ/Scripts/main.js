@@ -7,8 +7,9 @@
         $("#faceDetec").remove();
         $(".faceRecFailInfo").remove();
         $(".matchResult").remove();//clear result tables
-        handleFileSelect(e);
         $('<th class = "startRec" > Face Recognizing.Please wait a moment...</th>').insertAfter("#originalImage");
+        handleFileSelect(e);
+        
     });
     $("#search_Button").click(function () {
         if (searchRunning) return;
@@ -23,7 +24,11 @@ var image_uid_confirm;
 var searchRunning = false;
 function handleFileSelect(evt) {
     var files = evt.target.files; // uploaded portrait
-    if (files.length == 0) return;
+    if (files.length == 0)
+    {
+        $(".startRec").remove();
+        return;
+    } 
     handleSelectedFiles(files[0]);
 }
 //Get uploaded portrait and put in table to show to users
@@ -84,7 +89,7 @@ function getFaceImage(face_uid) {
                 var data_url = 'data:image/jpeg;base64,' + face_image;
                 // Render face image to table.
                 var span = document.createElement('span');
-                if (face_uid == image_uid_confirm && $("#addImages").children().length <= 2 && $(".startRec").length > 0) {
+                if (face_uid == image_uid_confirm && $("#addImages").children().length == 2 && $(".startRec").length > 0) {
                     $(".startRec").remove();
                     span.innerHTML = ['<img style="height:203px" src="', data_url, '" title="', escape(face_uid), '"/>'].join('');
                     $('<th id = "faceDetec" >' + span.innerHTML + '</th>').insertAfter("#originalImage");
