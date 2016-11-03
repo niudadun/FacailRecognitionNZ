@@ -2,6 +2,12 @@
 
     $("#search_Button").hide();
     $("#upload_Image").change(function (e) {
+        if (searchRunning) {
+            $("#upload_Image").val('');
+            return;
+        }
+        $("#search_Button").hide();
+        $("#upload_Image").prop("disabled", true);
         $("#originalImage").html('');
         $("#uploadedImage").html('');
         $(".startRec").remove();
@@ -25,11 +31,18 @@ var image_uid_confirm;
 var searchRunning = false;
 function handleFileSelect(evt) {
     var files = evt.target.files; // uploaded portrait
-    if (files.length == 0)
+    if (files.length == 0 || !files[0].type.match('image.*'))
     {
         $(".startRec").remove();
+        $("#upload_Image").prop("disabled", false);
+        image_uid_confirm = 0;
+        $("#search_Button").hide();
+        if (!files[0].type.match('image.*')) {
+            $('<th class = "faceRecFailInfo" > The format of Chosen file is not image, please try another one.</th>').insertAfter("#originalImage");
+        }
         return;
-    } 
+    }
+
     handleSelectedFiles(files[0]);
 }
 //Get uploaded portrait and put in table to show to users
@@ -40,9 +53,7 @@ function handleSelectedFiles(f) {
                 f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
                 '</li>');
     $("#uploadedImage").html(output.join(''));
-    if (!f.type.match('image.*')) {
-        return;
-    }
+    uploadRunning = true;
     var reader = new FileReader();
     reader.onload = (function (theFile) {
         return function (e) {
@@ -90,11 +101,18 @@ function getFaceImage(face_uid) {
                 var data_url = 'data:image/jpeg;base64,' + face_image;
                 // Render face image to table.
                 var span = document.createElement('span');
-                if (face_uid == image_uid_confirm && $("#addImages").children().length == 2 && $(".startRec").length > 0) {
-                    $(".startRec").remove();
+                if (face_uid == image_uid_confirm && $("#addImages").children().length == 2) {
+                    if ($(".startRec").length > 0) {
+                        $(".startRec").remove();
+                    }
+                    else {
+                        $("#faceDetec").remove();
+                    }
                     span.innerHTML = ['<img style="height:203px" src="', data_url, '" title="', escape(face_uid), '"/>'].join('');
                     $('<th id = "faceDetec" >' + span.innerHTML + '</th>').insertAfter("#originalImage");
                     $("#search_Button").show();//after the user getting the image infomation, show the search button.
+                    uploadRunning = false;
+                    $("#upload_Image").prop("disabled", false);
                 }
                 else {//put macthing images in the table to show to users.
                     span.innerHTML = ['<img style="height:203px" src="', data_url, '" title="', escape(face_uid), '"/>'].join('');
@@ -236,6 +254,9 @@ function parseMacthInfo(data) {
         }
         searchRunning = false;
     }
+    else {
+        $('<th class = "faceRecFailInfo" > Cannot find matching portaits in database, please upload another one with clear face.</th>').insertAfter("#originalImage");
+    }
 }
 
 
@@ -285,6 +306,9 @@ function parseImageInfo(xmlDocRoot) {
         if ($(xmlDoc).children("FaceInfo").length == 0) {
             $(".startRec").remove();
             $('<th class = "faceRecFailInfo" > Cannot Recognize face in this portrait, please upload another one with clear face.</th>').insertAfter("#originalImage");
+            image_uid_confirm = 0;
+            $("#upload_Image").prop("disabled", false);
+            $("#search_Button").hide();
             return;
         }
         $(xmlDoc).children("FaceInfo").each(function () {
